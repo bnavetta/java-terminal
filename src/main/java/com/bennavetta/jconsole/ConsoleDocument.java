@@ -57,6 +57,19 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 		}
 	}
 	
+	public String getUserInput()
+	{
+		try
+		{
+			return getText(limit, getLength() - limit);
+		}
+		catch (BadLocationException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 	@Override
 	public void remove(int offs, int len) throws BadLocationException
 	{

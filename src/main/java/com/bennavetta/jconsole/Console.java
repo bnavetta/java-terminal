@@ -35,8 +35,6 @@ public class Console extends JTextPane implements KeyListener
 	
 	private String prompt;
 	
-	private StringBuilder text = new StringBuilder();
-	
 	private InputProcessor processor = new NoOpInputProcessor();
 	
 	private CompletionSource completionSource = new NoOpCompletionSource();
@@ -84,7 +82,7 @@ public class Console extends JTextPane implements KeyListener
         this.prompt = prompt;
 		doc.write(prompt, defaultStyle);
         
-		addKeyListener(this); //not the best way, but it works for now
+		addKeyListener(this); //catch tabs and enters for autocomplete and input processing
 	}
 	
 	public void write(String text)
@@ -114,11 +112,9 @@ public class Console extends JTextPane implements KeyListener
 	{
 		if(e.getKeyChar() == '\t')
 		{
-			//don't append autocomplete tabs to the text buffer
+			//don't append autocomplete tabs to the document
 			e.consume();
-			return;
 		}
-		text.append(e.getKeyChar());
 	}
 
 	public void keyPressed(KeyEvent e)
@@ -126,8 +122,9 @@ public class Console extends JTextPane implements KeyListener
 		if(e.getKeyCode() == KeyEvent.VK_TAB)
 		{
 			e.consume();
-			System.out.println(text.toString().trim());
-			List<String> completions = completionSource.complete(text.toString().trim());
+			String input = doc.getUserInput().trim();
+			
+			List<String> completions = completionSource.complete(input);
 			if(completions == null || completions.isEmpty())
 			{
 				//no completions
@@ -136,10 +133,9 @@ public class Console extends JTextPane implements KeyListener
 			else if(completions.size() == 1) //only one match - print it
 			{
 				String toInsert = completions.get(0);
-				toInsert = toInsert.substring(text.length());
+				toInsert = toInsert.substring(input.length());
 				doc.writeUser(toInsert, defaultStyle);
-				text.append(toInsert);
-					//don't trigger processing because the user might not agree with the autocomplete
+				//don't trigger processing because the user might not agree with the autocomplete
 			}
 			else
 			{
@@ -150,8 +146,9 @@ public class Console extends JTextPane implements KeyListener
 					help.append(' ');
 					help.append(str);
 				}
-				help.append("\n" + prompt + text.toString());
+				help.append("\n" + prompt);
 				doc.write(help.toString(), defaultStyle);
+				doc.writeUser(input, defaultStyle);
 			}
 		}
 	}
@@ -160,8 +157,7 @@ public class Console extends JTextPane implements KeyListener
 	{
 		if(e.getKeyCode() == KeyEvent.VK_ENTER)
 		{
-			processor.process(text.toString().trim(), this); //trim to remove newlines
-			text = new StringBuilder();
+			processor.process(doc.getUserInput().trim(), this); //trim to remove newlines
 			doc.write(prompt, defaultStyle);
 		}
 	}
