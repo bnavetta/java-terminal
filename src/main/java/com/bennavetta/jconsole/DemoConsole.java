@@ -97,7 +97,7 @@ public class DemoConsole
 				new Font(Font.MONOSPACED, Font.BOLD, 14), "$ ");
 		console.setPreferredSize(new Dimension(677, 343)); // Same as above
 		
-		console.setCompletionSource(new DefaultCompletionSource("help", "list", "die", "dinosaurs"));
+		console.setCompletionSource(new DefaultCompletionSource("help", "echo", "cls", "close","exit")); // String commands go here as well.
 		
         console.setProcessor(new InputProcessor() { // This processor breaks a statement into args and passes them to the matching
                                                     // command defined in the hashmap above (the part in step 2)
