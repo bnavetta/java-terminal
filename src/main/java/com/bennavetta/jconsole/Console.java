@@ -53,7 +53,7 @@ import javax.swing.JFrame;
 import java.text.AttributedString;
 import java.text.AttributedCharacterIterator;
 
-public class Console extends JTextPane implements KeyListener
+public class Console extends JTextPane implements KeyListener, MouseWheelListener, ComponentListener, MouseListener
 {	
 	private static final long serialVersionUID = -5260432287332359321L;
 	
