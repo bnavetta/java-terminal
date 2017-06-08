@@ -17,5 +17,5 @@ package com.bennavetta.jconsole;
 
 public interface InputProcessor
 {
-	public void process(String text, Console console);
+	public void process(String[] text, Console console);
 }
