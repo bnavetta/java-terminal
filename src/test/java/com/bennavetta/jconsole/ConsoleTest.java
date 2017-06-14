@@ -51,7 +51,7 @@ public class ConsoleTest {
 		frame.add(console);
 		
 		console.setProcessor(new InputProcessor(){
-			public void process(String text, Console console)
+			public void process(String[] text, Console console)
 			{
 				System.out.println(text);
 			}

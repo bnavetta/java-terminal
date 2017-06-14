@@ -24,7 +24,14 @@ package com.bennavetta.jconsole;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 public class DemoConsole
@@ -38,7 +45,7 @@ public class DemoConsole
     private static final Color BACKGROUND_COLOR = Color.BLACK;      // The background color
     private static final Color FOREGROUND_COLOR = Color.GREEN;      // The text color
 	
-	private static final HashMap<String, InputProcessor> commandMap = new Hashmap(10); // A hashmap to store commands and triggers.
+	private static final Map<String, InputProcessor> commandMap = new HashMap<String, InputProcessor>(10); // A hashmap to store commands and triggers.
     
     
 	/**
@@ -53,25 +60,25 @@ public class DemoConsole
             public void process(String[] args, Console console) {
                 console.cls();
             }
-        }
+        };
         
         InputProcessor terminateProgram = new InputProcessor() {
             public void process(String[] args, Console console) {
                 System.exit(0);
             }
-        }
+        };
         
         InputProcessor echo = new InputProcessor() {
             public void process(String[] args, Console console) {
-                Console.write(args[1]) // only echos the first word...
+                console.write(args[1]); // only echos the first word...
             }
-        }
+        };
         
         InputProcessor IDontUnderstand = new InputProcessor() {
             public void process(String[] args, Console console) {
-                Console.write("Sorry, I don't understand that command")
+                console.write("Sorry, I don't understand that command");
             }
-        }
+        };
         
     // STEP 2: Link all of these command codes to a one-word String command:
         
@@ -107,40 +114,13 @@ public class DemoConsole
             {
                 //1. Print for debugging:
                 System.out.println("Got Req. " + ++requests + ": '" + args[0] + "'");
-                //2. remove double spaces
-                String[] subCommandOMEGA = args[0].split(" ");
-                ArrayList<String> subCommandDELTA = new ArrayList<String>();
-                for(int i = 0; i < subCommandOMEGA.length; i++)
-                    if(!subCommandOMEGA[i].equals(""))
-                        subCommandDELTA.add(subCommandOMEGA[i]);
-                String[] subCommandALPHA = new String[subCommandDELTA.size()];
-                    //2B) convert arraylist to array
-                for(int i = 0; i < subCommandDELTA.size(); i++)
-                    subCommandALPHA[i] = subCommandDELTA.get(i);
-                    
-                //3. put together strings in quotation marks as a single argument.
-                ArrayList<String> subCommandBRAVO = new ArrayList<String>();
-                for (int i = 0; i < subCommandALPHA.length; i++) {
-                    String finalAddition = subCommandALPHA[i];
-                    if (subCommandALPHA[i].startsWith("\"")) {
-                        while(!subCommandALPHA[i].endsWith("\"") && i < subCommandALPHA.length)
-                            finalAddition = finalAddition + " " + subCommandALPHA[++i];
-                        finalAddition = removeQuotes(finalAddition);
-                    }
-                    subCommandBRAVO.add(finalAddition);
-                }
-                    //3B) convert arraylist to array
-                String[] subCommandCHARLIE = new String[subCommandBRAVO.size()];
-                for (int i = 0; i < subCommandBRAVO.size(); i++) {
-                    subCommandCHARLIE[i] = subCommandBRAVO.get(i);
-                }
                 
-                System.out.println("asked: " + Arrays.toString(subCommandCHARLIE));
+                System.out.println("asked: " + Arrays.toString(args));
                 //4. Process list of arguments
-                if (subCommandCHARLIE.length > 0 && commandMap.containsKey(subCommandCHARLIE[0].toLowerCase()))
-                    commandMap.get(subCommandCHARLIE[0].toLowerCase()).process(subCommandCHARLIE, console);
+                if (args.length > 0 && commandMap.containsKey(args[0].toLowerCase()))
+                    commandMap.get(args[0].toLowerCase()).process(args, console);
                 else
-                    commandMap.get("help").process(subCommandCHARLIE, console);
+                    commandMap.get("help").process(args, console);
             }
 		});
 		frame.add(console);

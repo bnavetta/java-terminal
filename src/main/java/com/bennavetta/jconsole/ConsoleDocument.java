@@ -38,20 +38,6 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 	private int limit;
 
 	private boolean doFocus = true;
-
-	public void write(String text, MutableAttributeSet attrs)
-	{
-		try
-		{
-			insertString(getLength(), text, attrs);
-			limit = getLength();
-			caret.setDot(limit);
-		}
-		catch(BadLocationException e)
-		{
-			e.printStackTrace();
-		}
-	}
 	
 	public void setConsole(Console console) {
         this.console = console;
@@ -72,8 +58,12 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
         catch(BadLocationException e)
         {
             e.printStackTrace();
-        } catch (NullPointerException e){}
-        if (doFocus) console.focus();
+        }
+
+        if (doFocus)
+        {
+        	console.focus();
+		}
     }
     
 	public void writeUser(String text, MutableAttributeSet attrs)

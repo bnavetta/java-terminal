@@ -15,43 +15,19 @@
  */
 package com.bennavetta.jconsole;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.font.TextAttribute;
-import java.awt.font.FontRenderContext;
-import java.awt.font.LineBreakMeasurer;
-import java.awt.FontMetrics;
-import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.ComponentEvent;
-import java.awt.Insets;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
-//import java.awt.Component;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import javax.swing.AbstractAction;
-import javax.swing.JTextPane;
-import javax.swing.JPopupMenu;
-import javax.swing.JMenuItem;
+import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.JFrame;
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import java.text.AttributedString;
-import java.text.AttributedCharacterIterator;
+//import java.awt.Component;
 
 public class Console extends JTextPane implements KeyListener, MouseWheelListener, ComponentListener, MouseListener
 {	
@@ -146,13 +122,12 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
      *
      * @author Joey Patel
      * @author pateljo@northvilleschools.net (valid until 06/18)
-     * @param  lineNumber the line number to be checked
+     * @param  distance the number of lines to scroll
      */
     public void scroll(int distance) {
         currentPosition+=distance;
         if (isInFocus(currentPosition))
             currentCommand = doc.getUserInput();
-        System.out.println("Is in focus: " + Boolean.toString(isInFocus(currentPosition)) + ", currentCommand: " + currentCommand);
         if (currentPosition < 0) currentPosition = 0;
         while (DOCUMENT_HARDCOPY.contains(""))
             DOCUMENT_HARDCOPY.remove("");
@@ -161,8 +136,7 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
         } else {
             DOCUMENT_HARDCOPY.set(DOCUMENT_HARDCOPY.size()-1,currentCommand);
         }
-        System.out.println(Arrays.toString(DOCUMENT_HARDCOPY.toArray()));
-        
+
         doc = new ConsoleDocument();
         doc.setConsole(this);
         setDocument(doc);
@@ -175,10 +149,8 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
             else {
                 this.write(prompt);
                 doc.writeUser(DOCUMENT_HARDCOPY.get(currentPosition + i),defaultStyle);
-                System.out.println("prmL: " + prompt.length() + ", prm: " + prompt + ", DHCRef: " + DOCUMENT_HARDCOPY.get(currentPosition + i) + ", DHCLen: " + DOCUMENT_HARDCOPY.get(currentPosition + i).length());
             }
                 
-            System.out.println(DOCUMENT_HARDCOPY.get(currentPosition + i));
         }
         doc.setFocusAfterAppend(true);
     }
@@ -349,10 +321,8 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
             else if(completions.size() == 1) //only one match - print it
             {
                 String toInsert = completions.get(0);
-                System.out.print("At first: " + toInsert + ", ");
                 toInsert = toInsert.substring(input.length());
                 doc.writeUser(toInsert, defaultStyle);
-                System.out.println(" Finally: " + toInsert);
                 //don't trigger processing because the user might not agree with the autocomplete
             }
             else
@@ -377,8 +347,7 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
             
             //Get current input
             String currentInput = doc.getUserInput().trim();
-            System.out.println("GOT'EM (up): " + currentInput);
-            
+
             //If there's no previous commands, beep and return
             if (currentCommandnum <= 0) {
                 currentCommandnum = 0; //It should never be less than zero, but you never know...
@@ -427,7 +396,6 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
             
             //Now, regardless of where you are in the list of commands, you're going to need to replace text.
             String currentInput = doc.getUserInput().trim();
-            System.out.println("GOT'EM (down): " + currentInput);
             if (currentInput != null && currentInput != "")  //not sure which one it returns, but it doesn't really matter
                 this.remove(doc.getLimit(),currentInput.length());
             
@@ -456,17 +424,16 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
             if (!DOCUMENT_HARDCOPY.get(DOCUMENT_HARDCOPY.size()-1).endsWith("\n"))
                 DOCUMENT_HARDCOPY.set(DOCUMENT_HARDCOPY.size()-1,DOCUMENT_HARDCOPY.get(DOCUMENT_HARDCOPY.size()-1) + "\n");
             DOCUMENT_HARDCOPY.add("");
-            String[] string = new String[1];
-            string[0] = doc.getUserInput().trim(); //trim to remove newlines
-            prompts.add(string[0]);
+            String line = doc.getUserInput().trim();
+            String[] args = parseLine(line);
+            prompts.add(line);
             currentCommandnum = prompts.size();
-            processor.process(string, this);
+            processor.process(args, this);
             doc.write(prompt, defaultStyle);
         }
 	}
 	
     public void mouseWheelMoved(MouseWheelEvent e) {
-        System.out.println("FIRED: mouseWheelMoved");
         this.scroll(e.getWheelRotation() * 3);
     }
     
@@ -514,10 +481,50 @@ public class Console extends JTextPane implements KeyListener, MouseWheelListene
             add(copyButton);
         }
     }
+
+    private static String[] parseLine(String line)
+    {
+        List<String> args = new ArrayList<String>();
+        StringBuilder current = new StringBuilder();
+        char[] chars = line.toCharArray();
+        boolean inQuotes = false;
+        for (char c :chars)
+        {
+            if (c == '"')
+            {
+                if (current.length() > 0)
+                {
+                    args.add(current.toString());
+                    current.setLength(0);
+                }
+                inQuotes = !inQuotes;
+            }
+            else if (inQuotes)
+            {
+                current.append(c);
+            }
+            else if (c == ' ')
+            {
+                if (current.length() > 0)
+                {
+                    args.add(current.toString());
+                    current.setLength(0);
+                }
+            }
+            else
+            {
+                current.append(c);
+            }
+        }
+
+        args.add(current.toString().trim());
+
+        return args.toArray(new String[0]);
+    }
     
 	private static class NoOpInputProcessor implements InputProcessor
 	{
-		public void process(String text, Console console) {}
+		public void process(String[] text, Console console) {}
 	}
 	
 	private static class NoOpCompletionSource implements CompletionSource
