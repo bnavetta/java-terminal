@@ -17,10 +17,15 @@ package com.bennavetta.jconsole;
 
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.MutableAttributeSet;
+
+import java.util.ArrayList;
+
+import java.awt.font.LineBreakMeasurer;
 
 public class ConsoleDocument extends DefaultStyledDocument implements CaretListener
 {
@@ -28,7 +33,11 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 	
 	private static final long serialVersionUID = -1270788544217141905L;
 
+	private Console console = null;
+
 	private int limit;
+
+	private boolean doFocus = true;
 
 	public void write(String text, MutableAttributeSet attrs)
 	{
@@ -44,6 +53,29 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 		}
 	}
 	
+	public void setConsole(Console console) {
+        this.console = console;
+    }
+    
+    public void setFocusAfterAppend(boolean var) {
+        doFocus = var;
+    }
+	
+    public void write(String text, MutableAttributeSet attrs)
+    {
+        try
+        {
+            insertString(getLength(), text, attrs);
+            limit = getLength();
+            caret.setDot(limit);
+        }
+        catch(BadLocationException e)
+        {
+            e.printStackTrace();
+        } catch (NullPointerException e){}
+        if (doFocus) console.focus();
+    }
+    
 	public void writeUser(String text, MutableAttributeSet attrs)
 	{
 		try
@@ -55,6 +87,7 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 		{
 			e.printStackTrace();
 		}
+        if (doFocus) console.focus();
 	}
 	
 	public String getUserInput()
@@ -68,6 +101,7 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 			e.printStackTrace();
 			return null;
 		}
+        
 	}
 	
 	@Override
@@ -85,12 +119,21 @@ public class ConsoleDocument extends DefaultStyledDocument implements CaretListe
 		this.caret = caret;
 	}
 	
-	public void caretUpdate(CaretEvent e)
-	{
-		if(e.getDot() < limit)
-		{
-			caret.setDot(limit);
-		}
-	}
+	public int getLimit() {
+        return limit;
+    }
+    
+    public boolean isCursorValid() {
+        return caret.getDot() >= limit;
+    }
+    
+    public void makeCursorValid() {
+        if(caret.getDot() < limit)
+         {
+             caret.setDot(limit);
+         }
+    }
+    
+    public void caretUpdate(CaretEvent e) {} // Moved to "MakeCursorValid" so that the user can still copy text
 	
 }
